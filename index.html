@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리학교 급식 조회</title>
+    <!-- Tailwind CSS를 사용하여 깔끔하고 모바일 친화적인 디자인 구현 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 기본 폰트 및 부드러운 스크롤 */
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            background-color: #f0fdfa; /* 아주 연한 파란/청록빛 배경 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 날짜 선택기 기본 스타일 수정 (파란색 테마) */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(40%) sepia(85%) saturate(1450%) hue-rotate(190deg) brightness(95%) contrast(90%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex justify-center">
+
+    <!-- 모바일 앱처럼 보이도록 최대 너비 제한 (max-w-md) -->
+    <div class="w-full max-w-md bg-white shadow-xl min-h-screen flex flex-col relative">
+        
+        <!-- 헤더 영역 -->
+        <header class="bg-blue-600 text-white p-5 rounded-b-2xl shadow-md sticky top-0 z-10">
+            <h1 class="text-2xl font-bold text-center flex items-center justify-center gap-2">
+                <span>🍱</span> 오늘 뭐 먹지?
+            </h1>
+            <p class="text-blue-100 text-sm text-center mt-1">우리학교 급식 메뉴</p>
+        </header>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="flex-1 p-5 flex flex-col gap-5 pb-24">
+            
+            <!-- 날짜 선택 영역 -->
+            <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl shadow-sm">
+                <label for="datePicker" class="block text-sm font-semibold text-blue-800 mb-2">날짜를 선택하세요</label>
+                <input type="date" id="datePicker" 
+                       class="w-full p-3 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 font-medium transition-all text-center text-lg">
+            </div>
+
+            <!-- 급식 메뉴 표시 영역 -->
+            <div id="menuContainer" class="flex flex-col gap-4">
+                <!-- JavaScript를 통해 이 곳에 메뉴가 렌더링됩니다. -->
+            </div>
+
+        </main>
+
+        <!-- 알레르기 정보 범례 (하단 고정 또는 하단 배치) -->
+        <div class="bg-slate-100 p-4 text-xs text-slate-500 border-t border-slate-200 mt-auto">
+            <p class="font-bold text-slate-600 mb-1 flex items-center gap-1">
+                <span>⚠️</span> 알레르기 유발 식품 안내
+            </p>
+            <p class="leading-relaxed">
+                1.난류 2.우유 3.메밀 4.땅콩 5.대두 6.밀 7.고등어 8.게 9.새우 10.돼지고기 11.복숭아 12.토마토 13.아황산류 14.호두 15.닭고기 16.쇠고기 17.오징어 18.조개류 19.잣
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 1. 임시 데이터 (5일치 샘플 메뉴: 2026년 6월 29일 ~ 7월 3일)
+        const menuData = {
+            "2026-06-29": {
+                lunch: [
+                    { name: "혼합잡곡밥", allergy: [] },
+                    { name: "쇠고기미역국", allergy: [5, 6, 16] },
+                    { name: "오징어돈육불고기", allergy: [5, 6, 10, 17] },
+                    { name: "계란말이", allergy: [1, 5] },
+                    { name: "배추김치", allergy: [9] }
+                ],
+                dinner: [
+                    { name: "참치마요덮밥", allergy: [1, 5, 6] },
+                    { name: "유부맑은장국", allergy: [5, 6] },
+                    { name: "깍두기", allergy: [9] },
+                    { name: "요구르트", allergy: [2] }
+                ]
+            },
+            "2026-06-30": {
+                lunch: [
+                    { name: "찰보리밥", allergy: [] },
+                    { name: "순두부찌개", allergy: [5, 9, 10] },
+                    { name: "안동찜닭", allergy: [5, 6, 15] },
+                    { name: "숙주나물무침", allergy: [5] },
+                    { name: "깍두기", allergy: [9] }
+                ],
+                dinner: [
+                    { name: "스파게티", allergy: [1, 2, 5, 6, 12, 16] },
+                    { name: "크림스프", allergy: [2, 5, 6] },
+                    { name: "수제마늘빵", allergy: [2, 5, 6] },
+                    { name: "오이피클", allergy: [] }
+                ]
+            },
+            "2026-07-01": {
+                lunch: [
+                    { name: "현미밥", allergy: [] },
+                    { name: "돼지국밥/부추무침", allergy: [9, 10] },
+                    { name: "고기만두/초간장", allergy: [1, 5, 6, 10] },
+                    { name: "석박지", allergy: [9] },
+                    { name: "수박", allergy: [] }
+                ],
+                dinner: null // 저녁 없는 날 테스트
+            },
+            "2026-07-02": {
+                lunch: [
+                    { name: "차조밥", allergy: [] },
+                    { name: "꽃게탕", allergy: [5, 6, 8] },
+                    { name: "돈육강정", allergy: [1, 5, 6, 10] },
+                    { name: "도토리묵무침", allergy: [5, 6] },
+                    { name: "배추김치", allergy: [9] }
+                ],
+                dinner: [
+                    { name: "카레라이스", allergy: [2, 5, 6, 10, 12, 16] },
+                    { name: "미소장국", allergy: [5, 6] },
+                    { name: "수제쏘세지구이", allergy: [2, 5, 6, 10] },
+                    { name: "배추김치", allergy: [9] }
+                ]
+            },
+            "2026-07-03": {
+                lunch: [
+                    { name: "기장밥", allergy: [] },
+                    { name: "마라탕", allergy: [2, 4, 5, 6, 10, 16] },
+                    { name: "꿔바로우", allergy: [1, 5, 6, 10] },
+                    { name: "단무지", allergy: [] },
+                    { name: "아이스슈", allergy: [1, 2, 5, 6] }
+                ],
+                dinner: [
+                    { name: "김치볶음밥", allergy: [5, 6, 9, 10] },
+                    { name: "계란국", allergy: [1, 5] },
+                    { name: "핫도그/케첩", allergy: [1, 2, 5, 6, 10, 12] },
+                    { name: "백김치", allergy: [] }
+                ]
+            }
+        };
+
+        // 2. HTML 요소 선택
+        const datePicker = document.getElementById('datePicker');
+        const menuContainer = document.getElementById('menuContainer');
+
+        // 3. 알레르기 뱃지 생성 함수
+        function createAllergyBadges(allergies) {
+            if (!allergies || allergies.length === 0) return '';
+            
+            const allergyText = allergies.join(',');
+            return `
+                <span class="inline-flex items-center gap-1 bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 border border-red-100">
+                    ⚠️ ${allergyText}
+                </span>
+            `;
+        }
+
+        // 4. 메뉴 카드 렌더링 함수
+        function renderMenuCard(title, menuItems, icon) {
+            if (!menuItems || menuItems.length === 0) {
+                return `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2 mb-3">
+                            <span class="text-xl">${icon}</span> ${title}
+                        </h2>
+                        <p class="text-slate-400 text-center py-4 text-sm">급식 정보가 없습니다.</p>
+                    </div>
+                `;
+            }
+
+            const itemListHtml = menuItems.map(item => `
+                <li class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                    <span class="font-medium text-slate-700">${item.name}</span>
+                    ${createAllergyBadges(item.allergy)}
+                </li>
+            `).join('');
+
+            return `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-blue-100 border-t-4 border-t-blue-400">
+                    <h2 class="text-lg font-bold text-blue-800 flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                        <span class="text-xl">${icon}</span> ${title}
+                    </h2>
+                    <ul class="flex flex-col gap-1">
+                        ${itemListHtml}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // 5. 선택된 날짜에 맞게 화면 업데이트
+        function updateDisplay(dateString) {
+            const data = menuData[dateString];
+
+            if (data) {
+                const lunchHtml = renderMenuCard('중식 (Lunch)', data.lunch, '☀️');
+                const dinnerHtml = renderMenuCard('석식 (Dinner)', data.dinner, '🌙');
+                menuContainer.innerHTML = lunchHtml + dinnerHtml;
+            } else {
+                // 데이터가 없는 날짜 처리
+                menuContainer.innerHTML = `
+                    <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 text-center flex flex-col items-center justify-center">
+                        <span class="text-4xl mb-3">📭</span>
+                        <h2 class="text-lg font-bold text-slate-700 mb-1">식단 정보가 없어요!</h2>
+                        <p class="text-slate-500 text-sm">주말이거나 아직 등록되지 않은 날짜입니다.<br>(샘플: 2026.06.29 ~ 2026.07.03)</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 6. 이벤트 리스너 등록 및 초기화
+        datePicker.addEventListener('change', (e) => {
+            updateDisplay(e.target.value);
+        });
+
+        // 초기 화면 설정 (2026-07-02로 세팅하여 바로 보이도록 함)
+        const defaultDate = '2026-07-02';
+        datePicker.value = defaultDate;
+        updateDisplay(defaultDate);
+
+    </script>
+</body>
+</html>
